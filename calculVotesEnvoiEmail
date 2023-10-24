@@ -1,0 +1,70 @@
+import boto3
+from boto3.dynamodb.conditions import Key
+from botocore.exceptions import ClientError
+
+def lambda_handler(event, context):
+    
+    #ce qui suit c est la partie de connexion a DynamoDB
+    liste = []
+    
+    dynamodb = boto3.resource('dynamodb')
+    
+    table = dynamodb.Table('votes')
+    
+    resp = table.scan(ProjectionExpression= "numero")
+    
+    liste.append(resp['Items']) #inserer les elements dans une liste
+    
+    max = liste[0].count(liste[0][0])
+    
+    i = 1
+    vainqueur = 1
+    
+    for i in range(len(liste[0])):
+        if liste[0].count(liste[0][i]) > max:
+            max = liste[0].count(liste[0][i])
+            
+            vainqueur = liste[0][i]
+        else :
+            max = max
+            
+    print('Le meilleur cantique est : ')
+    print(vainqueur)
+    
+    
+    #ce qui suit c est la partie d envoi de e-mail a SES
+
+    ses = boto3.client('ses')
+
+    body = """
+	    Hello and welcome to the SES Lambda Python Demo.
+	
+	    Regards,
+	    NKT Studios
+    """
+
+    ses.send_email(
+	    Source = 'deconokbak@yahoo.fr',
+	    Destination = {
+		    'ToAddresses': [
+			    'samynok@yahoo.fr'
+		    ]
+	    },
+	    Message = {
+		    'Subject': {
+			    'Data': 'SES Demo',
+			    'Charset': 'UTF-8'
+		    },
+		    'Body': {
+			    'Text':{
+				    'Data': body,
+				    'Charset': 'UTF-8'
+			    }
+		    }
+	    }
+    )
+    
+    return {
+        'statusCode': 200,
+        #'body': json.dumps('Successfully sent email from Lambda using Amazon SES')
+    }
