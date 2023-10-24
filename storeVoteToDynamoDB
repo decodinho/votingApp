@@ -1,0 +1,31 @@
+# import the json utility package since we will be working with a JSON object
+import json
+# import the AWS SDK (for Python the package name is boto3)
+import boto3
+# import two packages to help us with dates and date formatting
+from time import gmtime, strftime
+
+# create a DynamoDB object using the AWS SDK
+client = boto3.resource('dynamodb')
+# use the DynamoDB object to select our table
+table = client.Table('votes')
+# store the current time in a human readable format in a variable
+now = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
+
+# define the handler function that the Lambda service will use as an entry point
+def lambda_handler(event, context):
+# extract values from the event object we got from the Lambda service and store in a variable
+    numcantique = event['lastName']
+    name = event['firstName']
+    boite_mail = event['mail']
+    visuaffi = event['visuAffi']
+# write name and time to the DynamoDB table using the object we instantiated and save response in a variable
+    #print(visuaffi)
+    input={'email': boite_mail,'LatestGreetingTime':now, 'numero':numcantique, 'visu':visuaffi}
+            
+    response = table.put_item(Item=input)
+# return a properly formatted JSON object
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Merci. Votre vote a ete enregistre avec succes, ' + name)
+    }
